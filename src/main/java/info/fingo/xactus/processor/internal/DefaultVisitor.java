@@ -13,7 +13,7 @@
 
 package info.fingo.xactus.processor.internal;
 
-import java.util.Iterator;
+import java.util.Collection;
 
 import info.fingo.xactus.processor.ast.XPath;
 import info.fingo.xactus.processor.internal.ast.AddExpr;
@@ -69,7 +69,6 @@ import info.fingo.xactus.processor.internal.ast.VarRef;
 import info.fingo.xactus.processor.internal.ast.XPathExpr;
 import info.fingo.xactus.processor.internal.ast.XPathVisitor;
 
-@SuppressWarnings({"unchecked", "deprecation"})
 public class DefaultVisitor implements XPathVisitor {
 
 	/**
@@ -80,8 +79,7 @@ public class DefaultVisitor implements XPathVisitor {
 	 * @return the xpath expressions.
 	 */
 	public Object visit(XPath xp) {
-		for (Iterator<Expr> i = xp.iterator(); i.hasNext();) {
-			Expr e = (Expr) i.next();
+		for (Expr e : xp) {
 			e.accept(this);
 		}
 		return null;
@@ -94,8 +92,8 @@ public class DefaultVisitor implements XPathVisitor {
 	 * @return fex expression.
 	 */
 	public Object visit(ForExpr fex) {
-		for (Iterator<VarExprPair> i = fex.iterator(); i.hasNext();) {
-			i.next().expr().accept(this);
+		for (VarExprPair ve : fex) {
+			ve.expr().accept(this);
 		}
 		fex.expr().accept(this);
 		return null;
@@ -108,8 +106,8 @@ public class DefaultVisitor implements XPathVisitor {
 	 * @return qex expression.
 	 */
 	public Object visit(QuantifiedExpr qex) {
-		for (Iterator<VarExprPair> i = qex.iterator(); i.hasNext();) {
-			i.next().expr().accept(this);
+		for (VarExprPair ve : qex) {
+			ve.expr().accept(this);
 		}
 		qex.expr().accept(this);
 		return null;
@@ -122,8 +120,8 @@ public class DefaultVisitor implements XPathVisitor {
 	 * @return ifex expression.
 	 */
 	public Object visit(IfExpr ifex) {
-		for (Iterator<Expr> i = ifex.iterator(); i.hasNext();) {
-			i.next().accept(this);
+		for (Expr e : ifex) {
+			e.accept(this);
 		}
 		ifex.then_clause().accept(this);
 		ifex.else_clause().accept(this);
@@ -439,9 +437,9 @@ public class DefaultVisitor implements XPathVisitor {
 	 *            is the par expression.
 	 * @return e
 	 */
-	public Object visit(ParExpr e) {
-		for (Iterator<Expr> i = e.iterator(); i.hasNext();) {
-			i.next().accept(this);
+	public Object visit(ParExpr pe) {
+		for (Expr e : pe) {
+			e.accept(this);
 		}
 		return null;
 	}
@@ -460,11 +458,11 @@ public class DefaultVisitor implements XPathVisitor {
 	 *            is the fucntion call.
 	 * @return e
 	 */
-	public Object visit(FunctionCall e) {
-		for (Iterator<Expr> i = e.iterator(); i.hasNext();) {
-			i.next().accept(this);
+	public Object visit(FunctionCall fc) {
+		for (Expr e : fc) {
+			e.accept(this);
 		}
-		return e;
+		return fc;
 	}
 
 	/**
@@ -600,28 +598,33 @@ public class DefaultVisitor implements XPathVisitor {
 	}
 
 	/**
-	 * @param e
+	 * @param se
 	 *            is the axis step.
 	 * @return e
 	 */
-	public Object visit(AxisStep e) {
-		e.step().accept(this);
-		for (Iterator<Expr> i = e.iterator(); i.hasNext();) {
-			i.next().accept(this);
+	public Object visit(AxisStep se) {
+		se.step().accept(this);
+		for (Collection<Expr> i : se) {
+			for (Expr e : i) {
+				e.accept(this);
+			}
 		}
 		return null;
 	}
 
 	/**
-	 * @param e
+	 * @param se
 	 *            is the filter expression.
 	 * @return e
 	 */
-	public Object visit(FilterExpr e) {
-		e.primary().accept(this);
-		for (Iterator<Expr> i = e.iterator(); i.hasNext();) {
-			i.next().accept(this);
+	public Object visit(FilterExpr se) {
+		se.primary().accept(this);
+		for (Collection<Expr> i : se) {
+			for (Expr e : i) {
+				e.accept(this);
+			}
 		}
-		return e;
+		return se;
 	}
+	
 }

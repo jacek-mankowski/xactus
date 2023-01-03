@@ -355,7 +355,7 @@ public abstract class Function implements info.fingo.xactus.api.Function {
 		return BuiltinTypeLibrary.XS_UNTYPED;
 	}
 
-	public info.fingo.xactus.api.ResultSequence evaluate(Collection/*<ResultSequence>*/ args,
+	public info.fingo.xactus.api.ResultSequence evaluate(Collection<ResultSequence> args,
                                                          EvaluationContext evaluationContext) {
 
 		ResultSequence result = evaluate( args );

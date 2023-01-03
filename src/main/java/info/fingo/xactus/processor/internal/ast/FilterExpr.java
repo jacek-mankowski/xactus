@@ -28,8 +28,9 @@ import java.util.*;
  * position in the result sequence. The first context position is 1.
  */
 public class FilterExpr extends StepExpr {
+	
 	private PrimaryExpr _pexpr;
-	private Collection _exprs;
+	private Collection<Collection<Expr>> _exprs;
 
 	/**
 	 * Constructor of FilterExpr.
@@ -39,7 +40,7 @@ public class FilterExpr extends StepExpr {
 	 * @param exprs
 	 *            is copied to _exprs.
 	 */
-	public FilterExpr(PrimaryExpr pexpr, Collection exprs) {
+	public FilterExpr(PrimaryExpr pexpr, Collection<Collection<Expr>> exprs) {
 		_pexpr = pexpr;
 		_exprs = exprs;
 	}
@@ -49,6 +50,7 @@ public class FilterExpr extends StepExpr {
 	 *
 	 * @return Result of Visitor operation.
 	 */
+	@Override
 	public Object accept(XPathVisitor v) {
 		return v.visit(this);
 	}
@@ -67,7 +69,8 @@ public class FilterExpr extends StepExpr {
 	 *
 	 * @return The next predicate.
 	 */
-	public Iterator iterator() {
+	@Override
+	public Iterator<Collection<Expr>> iterator() {
 		return _exprs.iterator();
 	}
 
@@ -89,4 +92,5 @@ public class FilterExpr extends StepExpr {
 	public int predicate_count() {
 		return _exprs.size();
 	}
+	
 }

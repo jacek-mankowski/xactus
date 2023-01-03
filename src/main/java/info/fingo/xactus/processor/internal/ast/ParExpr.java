@@ -19,8 +19,9 @@ import java.util.*;
 /**
  * Class for parethesized expressions support.
  */
-public class ParExpr extends PrimaryExpr {
-	private Collection _exprs;
+public class ParExpr extends PrimaryExpr implements Iterable<Expr> {
+	
+	private Collection<Expr> _exprs;
 
 	/**
 	 * Constructor for ParExpr.
@@ -28,7 +29,7 @@ public class ParExpr extends PrimaryExpr {
 	 * @param exprs
 	 *            Expressions.
 	 */
-	public ParExpr(Collection exprs) {
+	public ParExpr(Collection<Expr> exprs) {
 		_exprs = exprs;
 	}
 
@@ -37,6 +38,7 @@ public class ParExpr extends PrimaryExpr {
 	 *
 	 * @return Result of Visitor operation.
 	 */
+	@Override
 	public Object accept(XPathVisitor v) {
 		return v.visit(this);
 	}
@@ -46,7 +48,9 @@ public class ParExpr extends PrimaryExpr {
 	 *
 	 * @return Result of Iterator operation.
 	 */
-	public Iterator iterator() {
+	@Override
+	public Iterator<Expr> iterator() {
 		return _exprs.iterator();
 	}
+	
 }

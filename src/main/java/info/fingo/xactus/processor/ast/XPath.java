@@ -25,6 +25,7 @@ import info.fingo.xactus.api.ResultSequence;
 import info.fingo.xactus.api.StaticContext;
 import info.fingo.xactus.api.XPath2Expression;
 import info.fingo.xactus.processor.DefaultEvaluator;
+import info.fingo.xactus.processor.internal.ast.Expr;
 import info.fingo.xactus.processor.internal.ast.XPathNode;
 import info.fingo.xactus.processor.internal.ast.XPathVisitor;
 
@@ -33,8 +34,9 @@ import info.fingo.xactus.processor.internal.ast.XPathVisitor;
  *
  * @deprecated This is only for internal use, use XPath2Expression instead
  */
-public class XPath extends XPathNode implements XPath2Expression {
-	private Collection _exprs;
+public class XPath extends XPathNode implements XPath2Expression, Iterable<Expr> {
+	
+	private Collection<Expr> _exprs;
 	private StaticContext _staticContext;
 	private Collection<QName> _resolvedFunctions;
 	private Collection<String> _axes;
@@ -47,7 +49,7 @@ public class XPath extends XPathNode implements XPath2Expression {
 	 * @param exprs
 	 *            XPath expressions.
 	 */
-	public XPath(Collection exprs) {
+	public XPath(Collection<Expr> exprs) {
 		_exprs = exprs;
 	}
 
@@ -65,7 +67,7 @@ public class XPath extends XPathNode implements XPath2Expression {
 	 *
 	 * @return Result of Iterator operation.
 	 */
-	public Iterator iterator() {
+	public Iterator<Expr> iterator() {
 		return _exprs.iterator();
 	}
 

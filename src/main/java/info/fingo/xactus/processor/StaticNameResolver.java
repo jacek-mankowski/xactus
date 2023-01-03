@@ -19,9 +19,10 @@ package info.fingo.xactus.processor;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
+
 import javax.xml.XMLConstants;
+
 import info.fingo.xactus.api.Function;
 import info.fingo.xactus.processor.ast.XPath;
 import info.fingo.xactus.processor.function.XSCtrLibrary;
@@ -101,6 +102,7 @@ import info.fingo.xactus.processor.internal.types.builtin.BuiltinTypeLibrary;
  * This class resolves static names.
  */
 public class StaticNameResolver implements XPathVisitor, StaticChecker {
+	
 	static class DummyError extends Error {
 
 		/**
@@ -291,30 +293,25 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 * @return null.
 	 */
 	public Object visit(XPath xp) {
-		for (Iterator i = xp.iterator(); i.hasNext();) {
-			Expr e = (Expr) i.next();
-
+		for (Expr e : xp) {
 			e.accept(this);
 		}
-
 		return null;
 	}
 
 	// does a for and a quantified expression
 	// takes the iterator for var expr paris
-	private void doForExpr(Iterator iter, Expr expr) {
+	private void doForExpr(Iterable<VarExprPair> iter, Expr expr) {
 		int scopes = 0;
 
 		// add variables to scope and check the binding sequence
-		while (iter.hasNext()) {
-			VarExprPair pair = (VarExprPair) iter.next();
+		for (VarExprPair pair : iter) {
 
 			QName var = pair.varname();
 			if (!expandVarQName(var))
 				reportBadPrefix(var.prefix());
 
 			Expr e = pair.expr();
-
 			e.accept(this);
 
 			pushScope(var, BuiltinTypeLibrary.XS_ANYTYPE);
@@ -337,8 +334,7 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 */
 	public Object visit(ForExpr fex) {
 
-		doForExpr(fex.iterator(), fex.expr());
-
+		doForExpr(fex, fex.expr());
 		return null;
 	}
 
@@ -351,16 +347,14 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 */
 	public Object visit(QuantifiedExpr qex) {
 		// lets cheat
-		doForExpr(qex.iterator(), qex.expr());
-
+		doForExpr(qex, qex.expr());
 		return null;
 	}
 
-	private void visitExprs(Iterator i) {
-		while (i.hasNext()) {
-			Expr e = (Expr) i.next();
+	private void visitExprs(Iterable<Expr> exps) {
 
-			e.accept(this);
+		for (Expr exp : exps) {
+			exp.accept(this);
 		}
 	}
 
@@ -373,12 +367,9 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 */
 	public Object visit(IfExpr ifex) {
 
-		visitExprs(ifex.iterator());
-
+		visitExprs(ifex);
 		ifex.then_clause().accept(this);
-
 		ifex.else_clause().accept(this);
-
 		return null;
 	}
 
@@ -813,8 +804,8 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 *            is the expression.
 	 * @return null.
 	 */
-	public Object visit(ParExpr e) {
-		visitExprs(e.iterator());
+	public Object visit(ParExpr pe) {
+		visitExprs(pe);
 		return null;
 	}
 
@@ -832,26 +823,26 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	/**
 	 * Validate a function call.
 	 *
-	 * @param e
+	 * @param fc
 	 *            is the expression.
 	 * @return null.
 	 */
-	public Object visit(FunctionCall e) {
-		QName name = e.name();
+	public Object visit(FunctionCall fc) {
 
+		QName name = fc.name();
 		if (!expandFunctionQName(name))
 			reportBadPrefix(name.prefix());
 
 		javax.xml.namespace.QName qName = name.asQName();
-		Function f = _sc.resolveFunction(qName, e.arity());
+		Function f = _sc.resolveFunction(qName, fc.arity());
 		if (f == null)
 			reportError(new StaticFunctNameError("Function does not exist: "
-				+ name.string() + " arity: " + e.arity()));
+				+ name.string() + " arity: " + fc.arity()));
 
 		if( qName.getNamespaceURI().equals( XSCtrLibrary.XML_SCHEMA_NS )
 			&& qName.getLocalPart().equalsIgnoreCase( XSQNameConstructor.XS_Q_NAME ) )
 		{
-			StringLiteral stringArgument = getStringArgument( e );
+			StringLiteral stringArgument = getStringArgument( fc );
 			if( stringArgument == null )
 			{
 				reportError( new StaticNameError( "!", "not string in function" ) );
@@ -875,16 +866,16 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 			f = new XSQNameConstructor( qnameArg );
 		}
 
-		e.set_function(f);
+		fc.set_function(f);
 		_resolvedFunctions.add(qName);
 
-		visitExprs(e.iterator());
+		visitExprs(fc);
 		return null;
 	}
 
 	private StringLiteral getStringArgument( FunctionCall e )
 	{
-		Object arg1 = e.iterator().next();
+		Expr arg1 = e.iterator().next();
 		if( arg1 instanceof XPathExpr && (((XPathExpr)arg1).expr() instanceof FilterExpr) )
 		{
 			StepExpr exp = ((XPathExpr)arg1).expr();
@@ -1115,11 +1106,10 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 		return null;
 	}
 
-	private void visitCollExprs(Iterator i) {
-		while (i.hasNext()) {
-			Collection exprs = (Collection) i.next();
+	private void visitCollExprs(Iterable<Collection<Expr>> i) {
 
-			visitExprs(exprs.iterator());
+		for (Collection<Expr> exps : i) {
+			visitExprs(exps);
 		}
 	}
 
@@ -1133,8 +1123,7 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	public Object visit(AxisStep e) {
 
 		e.step().accept(this);
-
-		visitCollExprs(e.iterator());
+		visitCollExprs(e);
 		return null;
 	}
 
@@ -1146,9 +1135,9 @@ public class StaticNameResolver implements XPathVisitor, StaticChecker {
 	 * @return null.
 	 */
 	public Object visit(FilterExpr e) {
+		
 		e.primary().accept(this);
-
-		visitCollExprs(e.iterator());
+		visitCollExprs(e);
 		return null;
 	}
 
